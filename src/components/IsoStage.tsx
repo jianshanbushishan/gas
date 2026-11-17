@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { RotateCcw, Pause, Play, Maximize2, Minimize2, ZoomIn, ZoomOut } from 'lucide-react';
-import { HudMetric, IsoEdge, IsoNode, NodeColor, NodeIcon, PacketKind, StageScene } from '../types/course';
+import { HudMetric, IsoEdge, IsoNode, PacketKind, StageScene } from '../types/course';
+import { NodeIllustration } from './NodeIllustration';
 
 interface IsoStageProps {
   hud: HudMetric[];
@@ -12,37 +13,6 @@ interface IsoStageProps {
   onReplay: () => void;
   lang: 'zh' | 'en';
 }
-
-interface Palette {
-  top: string;
-  left: string;
-  right: string;
-  text: string;
-}
-
-const LIGHT_PALETTES: Record<NodeColor, Palette> = {
-  blue: { top: '#c4daf4', left: '#9fc0e8', right: '#84addd', text: '#16283d' },
-  green: { top: '#d2e7b8', left: '#b5d592', right: '#9bc273', text: '#1b3014' },
-  amber: { top: '#fce2b6', left: '#f2ca88', right: '#e2b368', text: '#3d2809' },
-  violet: { top: '#e4d7f5', left: '#cbb7e8', right: '#b39bd8', text: '#2a1a42' },
-  rose: { top: '#f7d2de', left: '#eab2c4', right: '#da95ac', text: '#421625' },
-  teal: { top: '#c3e7e2', left: '#9cd2cb', right: '#7ebdb5', text: '#123632' },
-  sand: { top: '#efe5d6', left: '#dfd2be', right: '#cbbca5', text: '#2a251e' },
-  slate: { top: '#d7d4ce', left: '#bfbbb3', right: '#a8a39a', text: '#2e2b27' },
-  red: { top: '#f9cfc8', left: '#eeaba0', right: '#df8c7f', text: '#4c1712' }
-};
-
-const DARK_PALETTES: Record<NodeColor, Palette> = {
-  blue: { top: '#334c69', left: '#283c54', right: '#1f3044', text: '#e7f0fb' },
-  green: { top: '#3f542c', left: '#324322', right: '#27351a', text: '#e5f4d3' },
-  amber: { top: '#664c29', left: '#523c20', right: '#402f18', text: '#fbe8c7' },
-  violet: { top: '#4f3a6b', left: '#3f2e56', right: '#312344', text: '#eee3fc' },
-  rose: { top: '#633444', left: '#4f2936', right: '#3e1f2a', text: '#fbe0e8' },
-  teal: { top: '#2b534f', left: '#21423f', right: '#193330', text: '#d8f4f0' },
-  sand: { top: '#443d34', left: '#363029', right: '#2b2620', text: '#efe6d6' },
-  slate: { top: '#3d3934', left: '#302d29', right: '#25231f', text: '#cbc3b8' },
-  red: { top: '#68312c', left: '#542622', right: '#421d1a', text: '#fde0dc' }
-};
 
 const PACKET_COLORS: Record<Exclude<PacketKind, 'none'>, string> = {
   input: '#f0944d',
@@ -105,132 +75,14 @@ function outOfBoundsPenalty(b: RectBox): number {
   return penalty;
 }
 
-function renderNodeIcon(icon: NodeIcon, stroke: string) {
-  switch (icon) {
-    case 'server':
-      return (
-        <g stroke={stroke} strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="-11" y="-11" width="22" height="7" rx="2" />
-          <rect x="-11" y="-1" width="22" height="7" rx="2" />
-          <circle cx="-6.5" cy="-7.5" r="0.9" fill={stroke} />
-          <circle cx="-6.5" cy="2.5" r="0.9" fill={stroke} />
-          <line x1="2" y1="-7.5" x2="7" y2="-7.5" />
-          <line x1="2" y1="2.5" x2="7" y2="2.5" />
-        </g>
-      );
-    case 'client':
-      return (
-        <g stroke={stroke} strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="-11" y="-10" width="22" height="14" rx="2" />
-          <line x1="-5" y1="7" x2="5" y2="7" />
-          <line x1="0" y1="4" x2="0" y2="7" />
-        </g>
-      );
-    case 'pawn':
-      return (
-        <g stroke={stroke} strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="0" cy="-7" r="4" />
-          <path d="M-8 6 C-8 0, 8 0, 8 6 Z" />
-        </g>
-      );
-    case 'playerstate':
-      return (
-        <g stroke={stroke} strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="-10" y="-9" width="20" height="16" rx="2.5" />
-          <circle cx="-4" cy="-2" r="2.2" />
-          <line x1="1" y1="-3" x2="6" y2="-3" />
-          <line x1="1" y1="1" x2="6" y2="1" />
-        </g>
-      );
-    case 'asc':
-      return (
-        <g stroke={stroke} strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round">
-          <polygon points="0,-11 10,-5.5 10,5.5 0,11 -10,5.5 -10,-5.5" />
-          <circle cx="0" cy="0" r="3.5" />
-        </g>
-      );
-    case 'attr':
-      return (
-        <g stroke={stroke} strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round">
-          <ellipse cx="0" cy="-7" rx="9" ry="3.5" />
-          <path d="M-9 -7 V5 C-9 7, 9 7, 9 5 V-7" />
-          <path d="M-9 -1 C-9 1, 9 1, 9 -1" />
-        </g>
-      );
-    case 'ge':
-      return (
-        <g stroke={stroke} strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M1 -11 L-7 0 H0 L-2 9 L8 -2 H1 Z" />
-        </g>
-      );
-    case 'ga':
-      return (
-        <g stroke={stroke} strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round">
-          <polygon points="0,-10 3,-3 10,-3 4.5,1.5 6.5,8.5 0,4.5 -6.5,8.5 -4.5,1.5 -10,-3 -3,-3" />
-        </g>
-      );
-    case 'tag':
-      return (
-        <g stroke={stroke} strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M-9 -8 H0 L9 1 L1 9 L-9 0 Z" />
-          <circle cx="-4.5" cy="-3.5" r="1.3" fill={stroke} />
-        </g>
-      );
-    case 'cue':
-      return (
-        <g stroke={stroke} strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M0 -10 L2.2 -2.2 L10 0 L2.2 2.2 L0 10 L-2.2 2.2 L-10 0 L-2.2 -2.2 Z" />
-        </g>
-      );
-    case 'task':
-      return (
-        <g stroke={stroke} strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="0" cy="0" r="9" />
-          <polyline points="0,-5 0,0 4,2.5" />
-        </g>
-      );
-    case 'shield':
-      return (
-        <g stroke={stroke} strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M0 -10 L9 -6 V0 C9 5.5, 0 9.5, 0 9.5 C0 9.5, -9 5.5, -9 0 V-6 Z" />
-        </g>
-      );
-    case 'sword':
-      return (
-        <g stroke={stroke} strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round">
-          <line x1="-8" y1="8" x2="8" y2="-8" />
-          <polyline points="2,-8 8,-8 8,-2" />
-          <line x1="-6" y1="2" x2="-2" y2="6" />
-        </g>
-      );
-    case 'users':
-      return (
-        <g stroke={stroke} strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="-4" cy="-5" r="3" />
-          <circle cx="4" cy="-5" r="3" />
-          <path d="M-10 6 C-10 1, 2 1, 2 6" />
-          <path d="M0 6 C0 1, 10 1, 10 6" />
-        </g>
-      );
-    default:
-      return (
-        <g stroke={stroke} strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="-4,-5 -9,0 -4,5" />
-          <polyline points="4,-5 9,0 4,5" />
-          <line x1="1.5" y1="-6" x2="-1.5" y2="6" />
-        </g>
-      );
-  }
-}
-
 export function computeSceneLayout(scene: StageScene) {
   interface NodeGeom {
     node: IsoNode;
     x: number;
     y: number;
-    w: number;
-    h: number;
-    depth: number;
+    rx: number;
+    ryTop: number;
+    ryBot: number;
     capW: number;
     capH: number;
     capTop: number;
@@ -250,37 +102,38 @@ export function computeSceneLayout(scene: StageScene) {
       }
     : null;
 
-  // ---- Uniform, compact block sizes; text lives in a caption below the block ----
+  // ---- Compact elliptical artwork footprints; text lives in a caption below the node ----
   const dimsOf = (n: IsoNode) => {
-    const w = n.size === 'lg' ? 62 : n.size === 'sm' ? 44 : 52;
-    const h = w * 0.5;
-    const depth = n.shape === 'platform' ? 8 : n.size === 'lg' ? 20 : n.size === 'sm' ? 14 : 17;
+    const scale = n.size === 'lg' ? 1.26 : n.size === 'sm' ? 0.90 : 1.10;
+    const rx = Math.round(35 * scale);
+    const ryTop = Math.round(28 * scale);
+    const ryBot = Math.round(27 * scale);
     const labelW = estimateTextWidth(n.label, 12);
     const subW = n.sublabel ? estimateTextWidth(n.sublabel, 10) : 0;
     const capW = Math.ceil(Math.max(labelW, subW, 30) + 16);
     const capH = n.sublabel ? 34 : 20;
-    return { w, h, depth, capW, capH };
+    return { rx, ryTop, ryBot, capW, capH };
   };
 
   const buildGeom = (n: IsoNode, x: number, y: number): NodeGeom => {
-    const { w, h, depth, capW, capH } = dimsOf(n);
-    const capTop = y + h + depth + 6;
+    const { rx, ryTop, ryBot, capW, capH } = dimsOf(n);
+    const capTop = y + ryBot + 7;
     return {
       node: n,
       x,
       y,
-      w,
-      h,
-      depth,
+      rx,
+      ryTop,
+      ryBot,
       capW,
       capH,
       capTop,
       textBox: { left: x - capW / 2, right: x + capW / 2, top: capTop, bottom: capTop + capH },
-      blockBox: { left: x - w, right: x + w, top: y - h, bottom: y + h + depth }
+      blockBox: { left: x - rx, right: x + rx, top: y - ryTop, bottom: y + ryBot }
     };
   };
 
-  // Footprint used to fit the scene into the stage (block + caption + reserved pill space)
+  // Footprint used to fit the scene into the stage (artwork + caption + reserved pill space)
   const footprintOf = (g: NodeGeom): RectBox => {
     const n = g.node;
     let top = g.blockBox.top;
@@ -308,15 +161,15 @@ export function computeSceneLayout(scene: StageScene) {
     return { n, vx: p.x - 425, vy: p.y - 268 };
   });
 
-  // Distance from node center to the visual boundary (block + caption) along a direction
+  // Distance from node center to the visual boundary (artwork ellipse + caption) along a direction
   const boundaryDist = (g: NodeGeom, ux: number, uy: number) => {
-    const hv = uy < 0 ? g.h : g.h + g.depth;
-    let t = 1 / (Math.abs(ux) / g.w + Math.abs(uy) / hv + 1e-6);
-    if (uy > 0.05) {
+    const ry = uy < 0 ? g.ryTop : g.ryBot;
+    let t = 1 / (Math.hypot(ux / g.rx, uy / ry) + 1e-6);
+    if (uy > 0.08) {
       const tc = (g.capTop + g.capH - g.y) / uy;
-      if (Math.abs(ux * tc) <= g.capW / 2 + 2) t = Math.max(t, tc);
+      if (Math.abs(ux * tc) <= g.capW / 2 + 4) t = Math.max(t, tc);
     }
-    return t + 7;
+    return t + 9;
   };
 
   // Layout quality: hard constraints (fits / no overlaps) + soft score (long connectors, no crossings)
@@ -625,12 +478,7 @@ export function computeSceneLayout(scene: StageScene) {
       }
       score += outOfBoundsPenalty(box) * 500;
       for (const bb of nodeBlockBoxes) {
-        if (bb.id === ownNodeId) continue;
-        score += overlapArea(box, bb.box, 1) * 0.08;
-      }
-      for (const g of sortedNodes) {
-        const iconBox = { left: g.x - 15, right: g.x + 15, top: g.y - 14, bottom: g.y + 14 };
-        score += overlapArea(box, iconBox, 0) * 30;
+        score += overlapArea(box, bb.box, 2) * (bb.id === ownNodeId ? 45 : 35);
       }
       score += Math.hypot(c.cx - defaultX, c.cy - defaultY);
       if (score < bestScore) {
@@ -680,14 +528,14 @@ export function computeSceneLayout(scene: StageScene) {
   const overlayPills: OverlayPill[] = [];
 
   // 1. Node badges and bottom pills (anchored tightly to their nodes)
-  sortedNodes.forEach(({ node, x, y, h, capTop, capH }) => {
+  sortedNodes.forEach(({ node, x, y, ryTop, capTop, capH }) => {
     const belowCaption = capTop + capH + 14;
     if (node.badge) {
       const hasBar = typeof node.badge.progress === 'number';
       const textW = estimateTextWidth(node.badge.text, 10.2);
       const pillW = Math.max(hasBar ? 88 : 76, Math.ceil(textW) + (hasBar ? 58 : 26));
       const defX = x;
-      const defY = y - h - 17;
+      const defY = y - ryTop - 16;
       const candidates = [
         { cx: defX, cy: defY },
         { cx: defX, cy: defY - 12 },
@@ -844,7 +692,6 @@ export const IsoStage: React.FC<IsoStageProps> = ({
   const inkStroke = theme === 'dark' ? '#e5dccb' : '#1d1b18';
   const cardBg = theme === 'dark' ? '#26231e' : '#fbf7f1';
   const mutedStroke = theme === 'dark' ? '#6a6054' : '#9c9386';
-  const palettes = theme === 'dark' ? DARK_PALETTES : LIGHT_PALETTES;
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setDragging(true);
@@ -1032,6 +879,17 @@ export const IsoStage: React.FC<IsoStageProps> = ({
           >
             <path d="M 0 1.5 L 8.5 5 L 0 8.5 z" fill={inkStroke} />
           </marker>
+          <marker
+            id="arrow-error"
+            viewBox="0 0 10 10"
+            refX="7"
+            refY="5"
+            markerWidth="6"
+            markerHeight="6"
+            orient="auto-start-reverse"
+          >
+            <path d="M 0 1.5 L 8.5 5 L 0 8.5 z" fill="#e5534b" />
+          </marker>
         </defs>
 
         <g
@@ -1045,6 +903,7 @@ export const IsoStage: React.FC<IsoStageProps> = ({
             const packetKind = edge.packet && edge.packet !== 'none' ? edge.packet : null;
             const count = edge.packetRate === 'fast' ? 3 : edge.packetRate === 'slow' ? 1 : 2;
             const speedMul = edge.packetRate === 'fast' ? 1.4 : edge.packetRate === 'slow' ? 0.75 : 1;
+            const markerId = edge.packet === 'error' ? 'url(#arrow-error)' : 'url(#arrow-ink)';
 
             return (
               <g key={edge.id}>
@@ -1056,8 +915,8 @@ export const IsoStage: React.FC<IsoStageProps> = ({
                   stroke={edge.packet === 'error' ? '#e5534b' : inkStroke}
                   strokeWidth="1.9"
                   strokeDasharray={edge.style === 'dashed' ? '5 5' : undefined}
-                  markerEnd="url(#arrow-ink)"
-                  markerStart={edge.bidirectional ? 'url(#arrow-ink)' : undefined}
+                  markerEnd={markerId}
+                  markerStart={edge.bidirectional ? markerId : undefined}
                   opacity={0.88}
                 />
 
@@ -1129,124 +988,12 @@ export const IsoStage: React.FC<IsoStageProps> = ({
             );
           })}
 
-          {/* 3D Isometric Blocks */}
-          {sceneLayout.sortedNodes.map(({ node, x, y, w, h, depth }) => {
-            const isCrashed = node.state === 'crashed';
-            const isDisabled = node.state === 'disabled';
-            const pal = isCrashed || isDisabled ? palettes.slate : palettes[node.color];
-
-            return (
-              <g
-                key={node.id}
-                transform={`translate(${x}, ${y})`}
-                opacity={isDisabled ? 0.58 : 1}
-              >
-                {/* Ground Drop Shadow */}
-                <polygon
-                  points={`0,${-h + depth + 6} ${w + 4},${depth + 6} 0,${h + depth + 8} ${-w - 4},${depth + 6}`}
-                  fill="rgba(0,0,0,0.14)"
-                />
-
-                {/* Active / Predicted Halo */}
-                {node.state === 'active' && (
-                  <ellipse
-                    cx="0"
-                    cy={depth * 0.4}
-                    rx={w + 10}
-                    ry={h + 8}
-                    fill="none"
-                    stroke="#6cc067"
-                    strokeWidth="2.2"
-                    strokeDasharray="6 4"
-                  />
-                )}
-                {node.state === 'predicted' && (
-                  <ellipse
-                    cx="0"
-                    cy={depth * 0.4}
-                    rx={w + 10}
-                    ry={h + 8}
-                    fill="none"
-                    stroke="#a87ee6"
-                    strokeWidth="2.2"
-                    strokeDasharray="5 4"
-                  />
-                )}
-
-                {node.shape === 'cylinder' ? (
-                  <>
-                    {/* Cylinder Body */}
-                    <path
-                      d={`M ${-w * 0.82} -6 V ${depth} A ${w * 0.82} ${h * 0.72} 0 0 0 ${
-                        w * 0.82
-                      } ${depth} V -6 Z`}
-                      fill={pal.left}
-                      stroke={inkStroke}
-                      strokeWidth="1.8"
-                      strokeLinejoin="round"
-                    />
-                    {/* Cylinder Top */}
-                    <ellipse
-                      cx="0"
-                      cy="-6"
-                      rx={w * 0.82}
-                      ry={h * 0.72}
-                      fill={pal.top}
-                      stroke={inkStroke}
-                      strokeWidth="1.8"
-                    />
-                  </>
-                ) : (
-                  <>
-                    {/* Left Extruded Wall */}
-                    <polygon
-                      points={`${-w},0 0,${h} 0,${h + depth} ${-w},${depth}`}
-                      fill={pal.left}
-                      stroke={inkStroke}
-                      strokeWidth="1.8"
-                      strokeLinejoin="round"
-                    />
-                    {/* Right Extruded Wall */}
-                    <polygon
-                      points={`${w},0 0,${h} 0,${h + depth} ${w},${depth}`}
-                      fill={pal.right}
-                      stroke={inkStroke}
-                      strokeWidth="1.8"
-                      strokeLinejoin="round"
-                    />
-                    {/* Top Isometric Diamond */}
-                    <polygon
-                      points={`0,${-h} ${w},0 0,${h} ${-w},0`}
-                      fill={pal.top}
-                      stroke={inkStroke}
-                      strokeWidth="1.8"
-                      strokeLinejoin="round"
-                    />
-                  </>
-                )}
-
-                {/* Node Icon (centered on the top face) */}
-                <g transform={`translate(0, ${node.shape === 'cylinder' ? -6 : node.shape === 'platform' ? -1 : -1})`}>
-                  {isCrashed ? (
-                    <path
-                      d="M-10 -10 L10 10 M10 -10 L-10 10"
-                      stroke="#e5534b"
-                      strokeWidth="3.2"
-                      strokeLinecap="round"
-                    />
-                  ) : (
-                    <g
-                      transform={`scale(${
-                        node.size === 'lg' ? 1.2 : node.size === 'sm' ? 0.92 : 1.05
-                      })`}
-                    >
-                      {renderNodeIcon(node.icon, pal.text)}
-                    </g>
-                  )}
-                </g>
-              </g>
-            );
-          })}
+          {/* Semantic SVG Node Illustrations (borderless, no cuboid frames) */}
+          {sceneLayout.sortedNodes.map(({ node, x, y }) => (
+            <g key={node.id} transform={`translate(${x}, ${y})`}>
+              <NodeIllustration node={node} theme={theme} />
+            </g>
+          ))}
 
           {/* Node Captions (label + sublabel) — drawn above every block so no block can hide them */}
           {sceneLayout.sortedNodes.map(({ node, x, capTop, capW, capH }) => {
