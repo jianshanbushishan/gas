@@ -389,7 +389,7 @@ select {
 /* 3-Column Learn Workbench */
 .body {
   display: grid;
-  grid-template-columns: 288px minmax(0, 1fr) 380px;
+  grid-template-columns: 288px minmax(0, 1fr) 517px;
   min-height: 0;
   height: 100%;
 }
