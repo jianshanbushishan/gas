@@ -829,6 +829,94 @@ select {
   background: var(--green-2);
 }
 
+/* Segmented Stage View Switcher (Option A: Iso Flow vs Deep Diagram) */
+.stage__view-switch {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  border-radius: 9px;
+  border: 1.5px solid var(--ink);
+  background: var(--card);
+  box-shadow: var(--pop-shadow);
+  margin-right: 4px;
+}
+
+.view-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 25px;
+  padding: 0 9px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11.2px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+
+.view-tab:hover:not(.is-active) {
+  color: var(--ink);
+  background: var(--chip-bg);
+}
+
+.view-tab.is-active {
+  background: var(--green);
+  color: var(--green-ink);
+  border-color: var(--ink);
+  font-weight: 800;
+}
+
+.view-tab--deep.is-active {
+  background: var(--violet);
+  color: var(--violet-ink);
+  border-color: var(--ink);
+}
+
+.stage__sub-diagrams {
+  position: absolute;
+  left: 14px;
+  bottom: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 99px;
+  background: var(--card);
+  border: 1.4px solid var(--ink);
+  box-shadow: 1.5px 2px 0 var(--drop);
+  z-index: 6;
+}
+
+.stage__sub-label {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: var(--muted);
+  padding-left: 4px;
+}
+
+.sub-diagram-btn {
+  height: 22px;
+  padding: 0 9px;
+  border-radius: 99px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 10.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sub-diagram-btn.is-active {
+  background: var(--violet);
+  color: var(--violet-ink);
+  border-color: var(--ink);
+  font-weight: 800;
+}
+
 .stage__canvas {
   width: 100%;
   height: 100%;

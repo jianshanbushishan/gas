@@ -1,9 +1,17 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { RotateCcw, Pause, Play, Maximize2, Minimize2, ZoomIn, ZoomOut } from 'lucide-react';
+import { RotateCcw, Pause, Play, Maximize2, Minimize2, ZoomIn, ZoomOut, Network, Layers } from 'lucide-react';
 import { HudMetric, IsoEdge, IsoNode, PacketKind, StageScene } from '../types/course';
 import { NodeIllustration } from './NodeIllustration';
+import {
+  DIAGRAM_META_MAP,
+  getDiagramsForLessonStep,
+  StageDiagramContent
+} from './diagrams';
+import { StageDiagramId } from './diagrams/types';
 
 interface IsoStageProps {
+  lessonSlug: string;
+  stepId: string;
   hud: HudMetric[];
   scene: StageScene;
   theme: 'light' | 'dark';
@@ -632,6 +640,8 @@ export function computeSceneLayout(scene: StageScene) {
 }
 
 export const IsoStage: React.FC<IsoStageProps> = ({
+  lessonSlug,
+  stepId,
   hud,
   scene,
   theme,
@@ -642,11 +652,41 @@ export const IsoStage: React.FC<IsoStageProps> = ({
   lang
 }) => {
   const [phase, setPhase] = useState(0);
+  const [viewMode, setViewMode] = useState<'iso' | 'diagram'>('iso');
+  const [overrideDiagramId, setOverrideDiagramId] = useState<StageDiagramId | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
   const dragStartRef = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
+
+  const diagramInfo = useMemo(
+    () => getDiagramsForLessonStep(lessonSlug, stepId),
+    [lessonSlug, stepId]
+  );
+  const activeDiagramId = overrideDiagramId && diagramInfo.available.includes(overrideDiagramId)
+    ? overrideDiagramId
+    : diagramInfo.primary;
+  const activeDiagramMeta = DIAGRAM_META_MAP[activeDiagramId];
+
+  // Reset manual sub-diagram override when lesson or step changes
+  useEffect(() => {
+    setOverrideDiagramId(null);
+  }, [lessonSlug, stepId]);
+
+  // Keyboard shortcut 'V' to toggle between Isometric Flow and Deep Principle Diagram
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === 'v') {
+        e.preventDefault();
+        setViewMode((v) => (v === 'iso' ? 'diagram' : 'iso'));
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   // Track changed HUD metrics for subtle green pulse
   const prevHudRef = useRef<Record<string, string>>({});
@@ -732,6 +772,29 @@ export const IsoStage: React.FC<IsoStageProps> = ({
         </div>
 
         <div className="stage__tools">
+          <div className="stage__view-switch" role="tablist" aria-label="切换舞台视图">
+            <button
+              className={`view-tab ${viewMode === 'iso' ? 'is-active' : ''}`}
+              onClick={() => setViewMode('iso')}
+              title="切换为动态拓扑流向图 (快捷键 V)"
+            >
+              <Network size={13} />
+              <span>{lang === 'zh' ? '拓扑流向图' : 'Iso Flow'}</span>
+            </button>
+            <button
+              className={`view-tab view-tab--deep ${viewMode === 'diagram' ? 'is-active' : ''}`}
+              onClick={() => setViewMode('diagram')}
+              title={`切换为深度原理图：${activeDiagramMeta.title} (快捷键 V)`}
+            >
+              <Layers size={13} />
+              <span>
+                {lang === 'zh'
+                  ? `原理图 · ${activeDiagramMeta.shortTitle}`
+                  : `Diagram · ${activeDiagramMeta.shortTitleEn}`}
+              </span>
+            </button>
+          </div>
+
           {(zoom !== 1 || pan.x !== 0 || pan.y !== 0) && (
             <button className="btn-pop" onClick={resetView} title="重置视图">
               100%
@@ -773,8 +836,8 @@ export const IsoStage: React.FC<IsoStageProps> = ({
         </div>
       </div>
 
-      {/* Floating Canvas Code / Formula Inspection Card */}
-      {scene.inspectCard && (
+      {/* Floating Canvas Code / Formula Inspection Card (only in Iso Flow view) */}
+      {viewMode === 'iso' && scene.inspectCard && (
         <div
           style={{
             position: 'absolute',
@@ -898,8 +961,18 @@ export const IsoStage: React.FC<IsoStageProps> = ({
           {/* Isometric Diamond Grid */}
           <rect width="850" height="510" fill="url(#iso-grid)" mask="url(#grid-mask)" />
 
-          {/* Connectors & Animated Packets */}
-          {sceneLayout.edgeGeoms.map(({ edge, sx, sy, ex, ey }) => {
+          {viewMode === 'diagram' ? (
+            <StageDiagramContent
+              diagramId={activeDiagramId}
+              stepId={stepId}
+              phase={phase}
+              theme={theme}
+              lang={lang}
+            />
+          ) : (
+            <>
+              {/* Connectors & Animated Packets */}
+              {sceneLayout.edgeGeoms.map(({ edge, sx, sy, ex, ey }) => {
             const packetKind = edge.packet && edge.packet !== 'none' ? edge.packet : null;
             const count = edge.packetRate === 'fast' ? 3 : edge.packetRate === 'slow' ? 1 : 2;
             const speedMul = edge.packetRate === 'fast' ? 1.4 : edge.packetRate === 'slow' ? 0.75 : 1;
@@ -1190,11 +1263,13 @@ export const IsoStage: React.FC<IsoStageProps> = ({
               </g>
             );
           })}
+            </>
+          )}
         </g>
       </svg>
 
-      {/* Bottom-Left Legend */}
-      {scene.legend && scene.legend.length > 0 && (
+      {/* Bottom-Left Legend (Iso mode) */}
+      {viewMode === 'iso' && scene.legend && scene.legend.length > 0 && (
         <div className="stage__legend">
           {scene.legend.map((item, idx) => (
             <span key={idx} className="legend-item">
@@ -1205,6 +1280,26 @@ export const IsoStage: React.FC<IsoStageProps> = ({
               {item.label}
             </span>
           ))}
+        </div>
+      )}
+
+      {/* Bottom-Left Sub-Diagram Switcher (when lesson has 2 deep diagrams) */}
+      {viewMode === 'diagram' && diagramInfo.available.length > 1 && (
+        <div className="stage__sub-diagrams">
+          <span className="stage__sub-label">本节图谱：</span>
+          {diagramInfo.available.map((dId) => {
+            const meta = DIAGRAM_META_MAP[dId];
+            const isSel = dId === activeDiagramId;
+            return (
+              <button
+                key={dId}
+                className={`sub-diagram-btn ${isSel ? 'is-active' : ''}`}
+                onClick={() => setOverrideDiagramId(dId)}
+              >
+                {meta.shortTitle}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>

@@ -533,6 +533,8 @@ export const App: React.FC = () => {
             </div>
 
             <IsoStage
+              lessonSlug={curLesson.slug}
+              stepId={curStep.id}
               hud={curStep.hud}
               scene={curStep.scene}
               theme={theme}
@@ -710,6 +712,7 @@ export const App: React.FC = () => {
               <div className="kbd-hints">
                 <span className="kbd">←</span>
                 <span className="kbd">→</span> 步骤 &nbsp;·&nbsp;
+                <span className="kbd">V</span> 原理图 &nbsp;·&nbsp;
                 <span className="kbd">R</span> 重播 &nbsp;·&nbsp;
                 <span className="kbd">Space</span> 暂停
               </div>
