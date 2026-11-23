@@ -110,16 +110,16 @@ export const DesignLabView: React.FC = () => {
           <div className="breadcrumb">INTERACTIVE DESIGN LAB · 实时数值与联机沙盒</div>
           <h1>UE5 GAS 运行时交互实验台</h1>
           <p>
-            亲手拨动 UE 5.5 聚合器乘区开关、复现著名的负血量截断幽灵 Bug，并对比激活 RPC 与属性复制两条网络时间线（数值为演示假设）。
+            亲手拨动 UE 5.8 聚合器乘区开关、复现著名的负血量截断幽灵 Bug，并对比激活 RPC 与属性复制两条网络时间线（数值为演示假设）。
           </p>
         </div>
 
         <div className="card-grid">
-          {/* Simulator 1: UE 5.5 FAggregator */}
+          {/* Simulator 1: UE 5.8 FAggregator */}
           <div className="panel-card">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3>① UE 5.5 FAggregator 乘区计算器</h3>
-              <span className="meta-pill meta-pill--violet">UE 5.5 公式</span>
+              <h3>① UE 5.8 FAggregator 乘区计算器</h3>
+              <span className="meta-pill meta-pill--violet">UE 5.8 公式</span>
             </div>
             <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 0 }}>
               对比传统 <code>MultiplyAdditive</code>（同池相加）与 5.5 新增{' '}

@@ -107,7 +107,7 @@ ReplicateActivationOwnedTags=False`,
         id: 'a',
         text: '关闭 ReplicateActivationOwnedTags 时，ActivationOwnedTags 仅以本地非复制 LooseTag 方式加在 Server 与 Owning Client 上，不会同步给 SimulatedProxy',
         isCorrect: true,
-        explanation: '精准命中！现代 GAS 默认开启 ReplicateActivationOwnedTags：服务端激活技能时会把 ActivationOwnedTags 额外写入 MinimalReplicationTags（LocalPredicted / ServerInitiated）或 ReplicatedLooseTags，从而同步给旁观客户端；题设项目沿用老配置把开关关掉后，它就退化为纯本地 LooseTag。实战排错时应依次检查：1) ReplicateActivationOwnedTags 配置（具体所在 ini 分类以引擎版本为准）；2) SimulatedProxy 的 AnimBP 是否在 OnRep_PlayerState 到达前误缓存了空 ASC；3) 或直接通过持续型 GameplayEffect（含 UTargetTagsGameplayEffectComponent）授予标签。'
+        explanation: '精准命中！UE 5.8 默认在 Project Settings → Gameplay Abilities Settings（UGameplayAbilitiesDeveloperSettings）中开启 ReplicateActivationOwnedTags：服务端激活技能时统一通过 AddLooseGameplayTags(..., EGameplayTagReplicationState::CountToOwner) 走新版 GameplayTagCountContainer 同步给本机与旁观客户端（旧的 MinimalReplicationTags / ReplicatedLooseTags 已于 UE 5.7 废弃）；题设项目沿用老配置把开关关掉后，就退化为纯本地 None 状态。实战排错三步：1) 检查 Project Settings 中的 ReplicateActivationOwnedTags；2) 检查 SimulatedProxy 的 AnimBP 是否在 OnRep_PlayerState 到达前误缓存了空 ASC；3) 或直接通过持续型 GameplayEffect（含 UTargetTagsGameplayEffectComponent）授予标签。'
       },
       {
         id: 'b',
@@ -119,7 +119,7 @@ ReplicateActivationOwnedTags=False`,
         id: 'c',
         text: 'SimulatedProxy 上根本不存在 ASC 组件',
         isCorrect: false,
-        explanation: 'PlayerState 或 Character 上的 ASC 组件会正常复制到 SimulatedProxy 并接收 MinimalReplicationTags、复制松散标签与 GameplayCues。'
+        explanation: 'PlayerState 或 Character 上的 ASC 组件会正常复制到 SimulatedProxy 并接收复制标签（EGameplayTagReplicationState）与 GameplayCues。'
       }
     ],
     takeaway: '排查旁观端标签动画失灵三步曲：检查 ReplicateActivationOwnedTags 配置、核实 AnimBP 绑定的 ASC 非空、或用持续型 GE 授予状态标签。',
@@ -292,16 +292,16 @@ export const GLOSSARY_CONCEPTS: GlossaryConcept[] = [
     stepIndex: 3
   },
   {
-    term: 'Loose Gameplay Tags',
+    term: 'Loose Gameplay Tags & EGameplayTagReplicationState (UE 5.8)',
     category: '标签系统',
-    summary: '通过 AddLooseGameplayTag 手动添加的本地计数标签，默认绝不跨网复制且不支持预测回滚。',
+    summary: 'AddLooseGameplayTag 默认 TagRepState=None（仅本地不复制）；UE 5.7+ 移除 AddReplicatedLooseGameplayTag，统一用五档 EGameplayTagReplicationState 控制复制粒度。',
     lessonSlug: 'gameplay-tags-core',
     stepIndex: 4
   },
   {
     term: 'ActivationOwnedTags 与复制开关',
     category: '标签系统',
-    summary: '现代 GAS 默认通过 ReplicateActivationOwnedTags 把技能期标签同步给旁观端（走 MinimalReplicationTags / ReplicatedLooseTags）；排错需同查配置开关、AnimBP 绑定的 ASC 与持续 GE 方案。',
+    summary: 'UE 5.8 默认在 GameplayAbilitiesDeveloperSettings 开启 ReplicateActivationOwnedTags，统一走 CountToOwner 同步给旁观端；排错需同查配置开关、AnimBP 绑定的 ASC 与持续 GE 方案。',
     lessonSlug: 'tag-queries-blocking',
     stepIndex: 3
   },
@@ -334,16 +334,16 @@ export const GLOSSARY_CONCEPTS: GlossaryConcept[] = [
     stepIndex: 3
   },
   {
-    term: 'UGameplayEffectComponent (UE 5.3+)',
+    term: 'UGameplayEffectComponent (UE 5.8)',
     category: '游戏效果',
-    summary: 'UE 5.3 引入的模块化 GE 子组件架构；授予目标标签需选 UTargetTagsGameplayEffectComponent。',
+    summary: 'UE 5.8 模块化 GE 子组件体系（含 TargetTags / AssetTags / CancelAbilityTags / BlockAbilityTags / UIData 等）；授予目标标签必选 UTargetTagsGameplayEffectComponent。',
     lessonSlug: 'ge-components-math',
     stepIndex: 1
   },
   {
-    term: 'MultiplyAdditive vs MultiplyCompound (UE 5.5)',
+    term: 'MultiplyAdditive vs MultiplyCompound (UE 5.8)',
     category: '游戏效果',
-    summary: '单求值通道内 MultiplyAdditive 同池加算，5.5 新增 MultiplyCompound 独立连乘与 AddFinal 平坦追加；Override 覆盖当前通道输出。',
+    summary: '单求值通道内 MultiplyAdditive 同池加算，MultiplyCompound 独立连乘，AddFinal 平坦追加；Override 覆盖当前通道输出。',
     lessonSlug: 'ge-components-math',
     stepIndex: 4
   },
@@ -355,9 +355,9 @@ export const GLOSSARY_CONCEPTS: GlossaryConcept[] = [
     stepIndex: 3
   },
   {
-    term: 'InstancedPerActor (UE 5.5 废弃 NonInstanced)',
+    term: 'InstancedPerActor & PlayAnimAndWait (UE 5.8)',
     category: '技能与任务',
-    summary: 'UE 5.5 正式废弃 NonInstanced；生产环境首选 InstancedPerActor 并在每次激活/结束时重置临时变量。',
+    summary: 'NonInstanced 已废弃，首选 InstancedPerActor；除 PlayMontageAndWait 外，UE 5.8 内置 PlayAnimAndWait 直播 AnimSequence，GA 外部监听可用 AbilityAsync_*。',
     lessonSlug: 'ability-lifecycle',
     stepIndex: 3
   },

@@ -40,7 +40,7 @@ const PHASE_LABELS: Record<StepPhase, { zh: string; en: string }> = {
   ARCHITECTURE: { zh: 'ARCH · 架构', en: 'ARCHITECTURE' },
   TECHNIQUE: { zh: 'TECHNIQUE · 机制', en: 'TECHNIQUE' },
   PITFALL: { zh: 'PITFALL · 避坑', en: 'WATCH OUT' },
-  UE5_NEW: { zh: 'UE 5.3–5.5 新规', en: 'UE 5.3–5.5' },
+  UE5_NEW: { zh: 'UE 5.8 新规', en: 'UE 5.8' },
   SOLUTION: { zh: 'SOLUTION · 正解', en: 'SOLUTION' },
   RECAP: { zh: 'RECAP · 总结', en: 'RECAP' }
 };
@@ -277,7 +277,7 @@ export const App: React.FC = () => {
             <span className="brand__title">
               UE5 <span className="brand__hl">GAS</span>
             </span>
-            <span className="brand__ver">5.3–5.5</span>
+            <span className="brand__ver">5.8</span>
           </button>
 
           <nav className="nav">
@@ -337,9 +337,9 @@ export const App: React.FC = () => {
             {theme === 'light' ? <Moon size={14} /> : <Sun size={14} />}
           </button>
 
-          <div className="engine-badge" title="知识严格对齐 UE 5.3–5.5 源码与 Lyra Starter Game">
+          <div className="engine-badge" title="知识严格对齐 UE 5.8 源码与 Lyra Starter Game">
             <span>Engine</span>
-            <strong>Lyra · UE 5.5</strong>
+            <strong>Lyra · UE 5.8</strong>
           </div>
         </div>
       </header>

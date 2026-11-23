@@ -56,6 +56,11 @@ export const MODULES_7_TO_8: ModuleData[] = [
               '引擎 `GameplayAbilities` 插件提供两套核心基类体系（且已在引擎插件内直接内置了现代封装子类 `UGameplayCueNotify_Burst`、`AGameplayCueNotify_BurstLatent` 与 `AGameplayCueNotify_Looping`）：\n1. **`UGameplayCueNotify_Static`（或 `UGameplayCueNotify_Burst`）**：不生成任何 Actor，直接在 CDO 上执行函数！开销极低，专用于**一瞬间播完即止 (`OnExecute`)** 的受击火花、枪口火焰、挥刀音效。',
               '2. **`AGameplayCueNotify_Actor`（或 `AGameplayCueNotify_Looping`）**：在世界里生成真实 Actor 并挂接在目标身上，专用于**需要跟随状态存续 (`WhileActive` → `OnRemove`)** 的火焰缠身、护盾球体、冰冻材质切换。'
             ],
+            callout: {
+              kind: 'ue5',
+              label: '动画时间轴直出：UAnimNotify_GameplayCue',
+              text: 'UE 5.8 内置了 UAnimNotify_GameplayCue（面板名 GameplayCue (Burst)）与 UAnimNotify_GameplayCueState（GameplayCue (Looping)），美术可直接拖进动画蒙太奇时间轴触发瞬发或持续型 Cue，并支持编辑器内实时预览！'
+            },
             hud: [
               { key: 'burst', label: '瞬发特效 (受击/爆炸)', value: 'GCN_Static / Burst (零Spawn)', status: 'good' },
               { key: 'loop', label: '持续状态 (灼烧/护盾)', value: 'GCN_Actor / Looping', status: 'good' }
@@ -201,8 +206,13 @@ export const MODULES_7_TO_8: ModuleData[] = [
             title: '高阶必学：派生 FGameplayEffectContext 传递暴击与克制飘字',
             paragraphs: [
               '服务端 `ExecCalc` 掷骰子算出了“本次攻击触发 **暴击 (`bIsCriticalHit = true`)** 且 **火属性克制**”，怎么把这个结果顺着伤害 GE 一路带到客户端的受击 `GameplayCue` 里弹出金色暴击大字？',
-              '标准工程方案（参考 Lyra / Aura）：\n1. 继承 `FGameplayEffectContext` 定义 `FMyGameplayEffectContext`，添加 `bool bIsCriticalHit`；\n2. 重写 `GetScriptStruct()`、`Duplicate()` 以及 **`NetSerialize(FArchive& Ar, ...)`**（把布尔压进 `RepBits` 位掩码里仅占 1 bit 带宽！）；\n3. 继承 `UAbilitySystemGlobals` 重写 `AllocGameplayEffectContext()` 并在 `DefaultGame.ini` 注册——从此全游戏的 `ExecCalc`、`PostGameplayEffectExecute` 与 `GameplayCueParameters` 都能随时强转取出暴击信息！'
+              '标准工程方案（参考 Lyra / Aura）：\n1. 继承 `FGameplayEffectContext` 定义 `FMyGameplayEffectContext`，添加 `bool bIsCriticalHit`；\n2. 重写 `GetScriptStruct()`、`Duplicate()` 以及 **`NetSerialize(FArchive& Ar, ...)`**（把布尔压进 `RepBits` 位掩码里仅占 1 bit 带宽！）；\n3. 继承 `UAbilitySystemGlobals` 重写 `AllocGameplayEffectContext()`，并在 **Project Settings → Game → Gameplay Abilities Settings**（`UGameplayAbilitiesDeveloperSettings::AbilitySystemGlobalsClassName`）注册——从此全游戏的 `ExecCalc`、`PostGameplayEffectExecute` 与 `GameplayCueParameters` 都能随时强转取出暴击信息！'
             ],
+            callout: {
+              kind: 'ue5',
+              label: 'UE 5.8 Iris 网络复制兼容性提示',
+              text: '在 UE 5.8 中开启 Iris 复制系统时，FGameplayEffectContextHandle 通过内置的 FGameplayEffectContextHandleNetSerializer（基于 TPolymorphicStructNetSerializerImpl 多态类型缓存）处理子类序列化；确保自定义子类保持 USTRUCT() 反射完整并正确特化 WithNetSerializer，必要时可按 Iris 规范配套自定义 NetSerializer。'
+            },
             codeSnippet: {
               title: '自定义 FMyGameplayEffectContext 关键重写三件套',
               code: `USTRUCT()\nstruct FMyGameplayEffectContext : public FGameplayEffectContext {\n  GENERATED_BODY()\n  bool bIsCriticalHit = false;\n  virtual UScriptStruct* GetScriptStruct() const override { return StaticStruct(); }\n  virtual FMyGameplayEffectContext* Duplicate() const override { ... }\n  virtual bool NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOutSuccess) override;\n}; // 别忘了特化 TStructOpsTypeTraits 开启 WithNetSerializer = true!`
@@ -368,7 +378,7 @@ export const MODULES_7_TO_8: ModuleData[] = [
           { id: 'g1', text: '理解为什么不应把全部武器和职业技能硬编码在角色基类上', unlockAtStep: 1 },
           { id: 'g2', text: '设计打包 GA + GE + AttributeSet 的 UMyAbilitySet 数据资产', unlockAtStep: 2 },
           { id: 'g3', text: '利用 GrantedHandles 凭证袋实现切枪/下车时零泄漏一键卸载', unlockAtStep: 3 },
-          { id: 'g4', text: '融会贯通整套 UE 5.3–5.5 GAS 生产级架构规范', unlockAtStep: 4 }
+          { id: 'g4', text: '融会贯通整套 UE 5.8 GAS 生产级架构规范', unlockAtStep: 4 }
         ],
         steps: [
           {
@@ -432,8 +442,13 @@ export const MODULES_7_TO_8: ModuleData[] = [
             title: 'GrantedHandles 凭证袋回收与共享叠层池注意事项',
             paragraphs: [
               '配合 `AbilitySet` 的是收据结构体 **`FMyAbilitySet_GrantedHandles`**（参考 `LyraAbilitySet.cpp`）：装备时调用 `GiveToAbilitySystem` 记录返回的 `FGameplayAbilitySpecHandle`、`FActiveGameplayEffectHandle` 与动态 `UAttributeSet*`；卸装时调用 `TakeFromAbilitySystem(ASC)` 统一移除。',
-              '**源码级边界警告（切勿盲信“无条件零误删”）**：`ASC->RemoveActiveGameplayEffect(Handle)` 默认参数 `StacksToRemove = -1` 会**一次性清空该句柄的全部叠层**！若两枚戒指给同一个 `AggregateByTarget`（或同源 `AggregateBySource`）可堆叠 GE 加层，它们会共用同一个 `ActiveGE` 句柄，摘下一枚戒指就会把两枚的层数全删光！因此：**装备词条 GE 应设为不堆叠 (`StackingType = None`) 使其各自生成独立 `ActiveGE`**（或显式传 `StacksToRemove = 1` 按层扣减），且共享的 `UAttributeSet` 应按角色生命周期托管或做引用计数后再调用 `RemoveSpawnedAttribute`！'
+              '**源码级边界警告（切勿盲信“无条件零误删”）**：`ASC->RemoveActiveGameplayEffect(Handle)` 默认参数 `StacksToRemove = -1` 会**一次性清空该句柄的全部叠层**！若两枚戒指给同一个 `AggregateByTarget`（或同源 `AggregateBySource`）可堆叠 GE 加层，它们会共用同一个 `ActiveGE` 句柄，摘下一枚戒指就会把两枚的层数全删光！因此：**装备词条 GE 应设为不堆叠 (`GetStackingType() == None`) 使其各自生成独立 `ActiveGE`**（或显式传 `StacksToRemove = 1` 按层扣减），且共享的 `UAttributeSet` 应按角色生命周期托管或做引用计数后再调用 `RemoveSpawnedAttribute`！'
             ],
+            callout: {
+              kind: 'ue5',
+              label: 'UE 5.8 C++ 句柄与授予组件变更提示',
+              text: 'UE 5.8 起：FActiveGameplayEffectHandle 废弃了整型构造与全局 TMap（ResetGlobalHandleMap/RemoveFromGlobalMap），改用 GenerateNewHandle() / GetInstantExecutedHandle()；自定义子类重写 UAbilitiesGameplayEffectComponent::GrantAbilities / RemoveAbilities 时，需改用接收 (UAbilitySystemComponent&, const FActiveGameplayEffect&) 的新重载。'
+            },
             codeSnippet: {
               title: 'Lyra 风格装备授予与安全回收规范',
               code: `// 1. 装备赋予 (仅 Server 权威调用；装备被动 GE 推荐设为 StackingType = None 独立实例)
@@ -472,21 +487,21 @@ EquippedHandles.TakeFromAbilitySystem(ASC);`
             id: 's4',
             shortLabel: '全局知识蓝图',
             phase: 'RECAP',
-            title: '通关全图：现代 UE 5.3–5.5 GAS 生产级架构总览',
+            title: '通关全图：现代 UE 5.8 GAS 生产级架构总览',
             paragraphs: [
-              '恭喜你走完从核心基石到 Lyra 模块化系统的全部旅程！现在你可以自信地搭建任何规模的 UE5 战斗框架：\n• **宿主与复制**：玩家挂 `PlayerState`（`Mixed` + `100Hz`），AI 挂 `Character`（`Minimal`）；\n• **标签与属性**：善用引用计数表，双层 `Clamp` 搭配 `IncomingDamage` 元属性；\n• **UE 5.3–5.5 现代标准**：用 `UGameplayEffectComponent` 拼装效果，理解 `MultiplyCompound` 新乘区，弃用 `NonInstanced` 全面拥抱 `InstancedPerActor` + `AbilitySet`！',
+              '恭喜你走完从核心基石到 Lyra 模块化系统的全部旅程！现在你可以自信地搭建任何规模的 UE 5.8 战斗框架：\n• **宿主与复制**：玩家挂 `PlayerState`（`Mixed` + `100Hz`），AI 挂 `Character`（`Minimal`），配合 `RegisteredSubObjectList` 与 Iris 序列化管线；\n• **标签与属性**：善用 `EGameplayTagReplicationState` 统一复制标签、双层 `Clamp` 搭配 `IncomingDamage` 元属性；\n• **UE 5.8 现代标准**：用 `UGameplayEffectComponent`（含 `CancelAbilityTags` / `UIData`）拼装效果，理解五段乘区公式，全面拥抱 `InstancedPerActor` + `PlayAnimAndWait` + `AbilityAsync` + `AbilitySet`！',
               '接下来，不妨点击顶部导航栏进入 **🎯 实战诊断 (Practice)** 挑战真实线上 Bug 排查，或在 **🧪 架构沙盒 (Design Lab)** 亲手拨动修改器与网络延迟观察实时仿真！'
             ],
             hud: [
               { key: 'course', label: '核心课程模块', value: '8 大模块 · 全部解锁', status: 'good' },
-              { key: 'std', label: '知识对标基准', value: 'UE 5.3–5.5 + Lyra', status: 'good' }
+              { key: 'std', label: '知识对标基准', value: 'UE 5.8 + Lyra', status: 'good' }
             ],
             scene: {
               nodes: [
                 { id: 'ps', col: -2, row: -0.9, color: 'sand', icon: 'playerstate', label: 'PlayerState + ASC', sublabel: 'Mixed · 100Hz', size: 'sm' },
                 { id: 'abset', col: -2, row: 1.1, color: 'blue', icon: 'ga', label: 'AbilitySet + Tasks', sublabel: 'InstancedPerActor', size: 'sm' },
-                { id: 'core', col: 0.1, row: 0, color: 'green', icon: 'asc', label: 'UE5 GAS 架构大师', sublabel: '预测 · 解耦 · 模块化', state: 'active', size: 'lg' },
-                { id: 'gec', col: 2.1, row: -0.9, color: 'amber', icon: 'ge', label: 'GEComponents + Exec', sublabel: '5.3–5.5 模块化管线', size: 'sm' },
+                { id: 'core', col: 0.1, row: 0, color: 'green', icon: 'asc', label: 'UE 5.8 GAS 架构大师', sublabel: '预测 · 解耦 · Iris', state: 'active', size: 'lg' },
+                { id: 'gec', col: 2.1, row: -0.9, color: 'amber', icon: 'ge', label: 'GEComponents + Exec', sublabel: 'UE 5.8 模块化管线', size: 'sm' },
                 { id: 'cue', col: 2.1, row: 1.1, color: 'rose', icon: 'cue', label: 'GameplayCues', sublabel: 'Custom EffectContext', size: 'sm' }
               ],
               edges: [

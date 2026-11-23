@@ -10,15 +10,15 @@ export const MODULES_5_TO_6: ModuleData[] = [
     lessons: [
       {
         slug: 'ability-lifecycle',
-        title: '技能授予、生命周期与 UE 5.5 实例化新规',
-        titleEn: 'Ability Lifecycle, Commit/End & UE 5.5 Instancing Policy',
-        summary: '走通 Give → Activate → Commit → End 权威链路，掌握 UE 5.5 正式废弃 NonInstanced 后的工程规范。',
+        title: '技能授予、生命周期与 UE 5.8 实例化新规',
+        titleEn: 'Ability Lifecycle, Commit/End & UE 5.8 Instancing Policy',
+        summary: '走通 Give → Activate → Commit → End 权威链路，掌握废弃 NonInstanced 后的 UE 5.8 工程规范。',
         durationMin: 12,
         difficulty: '入门',
         goals: [
           { id: 'g1', text: '掌握仅在 Server 调用 GiveAbility 并通过 SpecHandle 操作技能', unlockAtStep: 1 },
           { id: 'g2', text: '理解 CommitAbility 与漏调 EndAbility 导致技能永久卡死的原理', unlockAtStep: 2 },
-          { id: 'g3', text: '知悉 UE 5.5 正式废弃 NonInstanced，正确清理 InstancedPerActor 状态', unlockAtStep: 3 },
+          { id: 'g3', text: '知悉 NonInstanced 已废弃，正确清理 InstancedPerActor 状态与 UE 5.8 新访问器', unlockAtStep: 3 },
           { id: 'g4', text: '在 EnhancedInput 中通过 InputTag 优雅路由技能按下与松开', unlockAtStep: 4 },
           { id: 'g5', text: '用 AbilityTriggers 让受击/死亡等技能由 GameplayEvent 或标签自动触发', unlockAtStep: 5 },
           { id: 'g6', text: '配置 Cost/Cooldown GE，并用通用冷却 GE + SetByCaller 避免资产爆炸', unlockAtStep: 6 }
@@ -87,25 +87,25 @@ export const MODULES_5_TO_6: ModuleData[] = [
           },
           {
             id: 's3',
-            shortLabel: 'UE 5.5 实例化新规',
+            shortLabel: 'UE 5.8 实例化新规',
             phase: 'UE5_NEW',
-            title: 'UE 5.5 正式废弃 NonInstanced！全面拥抱 InstancedPerActor',
+            title: '彻底告别 NonInstanced！UE 5.8 全面拥抱 InstancedPerActor',
             paragraphs: [
-              '过去 GAS 有三种实例化策略：`NonInstanced`、`InstancedPerActor`、`InstancedPerExecution`。在 **UE 5.5** 中，Epic 官方**正式废弃了 `NonInstanced`**（因为直接在类默认对象 CDO 上跑逻辑极易引发多角色数据串台且无法安全绑定异步任务）。',
-              '现代工程选型极其纯粹：\n• **99% 技能首选 `InstancedPerActor`**（也是 Lyra 默认值）：授予技能时只 `NewObject` 一次，反复复用零 GC 抖动！**唯一注意事项**：因为实例会跨多次施法留存，你自己在技能里声明的临时变量（如 `int32 HitCount`）必须在每次 `ActivateAbility` 开头或 `EndAbility` 里手动清零！\n• **`InstancedPerExecution`**：每次施放都新建对象，仅用于极少数“同一技能允许在结束前重叠双开”的特殊设计。'
+              '过去 GAS 有三种实例化策略：`NonInstanced`、`InstancedPerActor`、`InstancedPerExecution`。自 UE 5.5 起，Epic 官方已**正式废弃 `NonInstanced`**（因为直接在类默认对象 CDO 上跑逻辑极易引发多角色数据串台且无法安全绑定异步任务）。',
+              '现代 UE 5.8 工程选型极其纯粹：\n• **99% 技能首选 `InstancedPerActor`**（也是 Lyra 默认值）：授予技能时只 `NewObject` 一次，反复复用零 GC 抖动！**唯一注意事项**：因为实例会跨多次施法留存，你自己在技能里声明的临时变量（如 `int32 HitCount`）必须在每次 `ActivateAbility` 开头或 `EndAbility` 里手动清零！\n• **`InstancedPerExecution`**：每次施放都新建对象，仅用于极少数“同一技能允许在结束前重叠双开”的特殊设计。'
             ],
             callout: {
               kind: 'ue5',
-              label: 'UE 5.5 编译迁移提示',
-              text: '若老代码构造函数写了 InstancingPolicy = EGameplayAbilityInstancingPolicy::NonInstanced，升级 UE 5.5 会收到废弃警告，请统一改为 InstancedPerActor 并检查成员变量重置。'
+              label: 'UE 5.8 伴随 API 升级提醒',
+              text: '除将 NonInstanced 统一迁移为 InstancedPerActor 外，在 UE 5.8 C++ 中：GA 内获取 ASC 请用 GetAbilitySystemComponentFromActorInfo_Ensured()（原 _Checked 已废弃）；蓝图库构造 GE Spec 请用 UAbilitySystemBlueprintLibrary::MakeSpecHandleByClass()（原 MakeSpecHandle 已废弃）。'
             },
             hud: [
-              { key: 'non_inst', label: 'NonInstanced (5.5)', value: '已正式废弃 Deprecated!', status: 'bad' },
-              { key: 'per_actor', label: 'InstancedPerActor', value: '行业标准 · 零分配复用', status: 'good' }
+              { key: 'non_inst', label: 'NonInstanced', value: '已正式废弃 Deprecated!', status: 'bad' },
+              { key: 'per_actor', label: 'InstancedPerActor', value: 'UE 5.8 行业标准 · 零分配复用', status: 'good' }
             ],
             scene: {
               nodes: [
-                { id: 'cdo', col: -1.8, row: -0.8, color: 'slate', icon: 'code', label: 'NonInstanced (CDO)', sublabel: 'UE 5.5 已废弃!', state: 'crashed', size: 'sm' },
+                { id: 'cdo', col: -1.8, row: -0.8, color: 'slate', icon: 'code', label: 'NonInstanced (CDO)', sublabel: 'UE 5.5+ 已废弃!', state: 'crashed', size: 'sm' },
                 {
                   id: 'actor',
                   col: 0.4,
@@ -258,8 +258,13 @@ export const MODULES_5_TO_6: ModuleData[] = [
             title: '动作游戏基石：PlayMontageAndWait + WaitGameplayEvent',
             paragraphs: [
               '`[[UAbilityTask|与所属 GameplayAbility 严密绑定生命周期的异步任务对象，EndAbility 时全部自动销毁]]` 与所属 GA 同生共死：一旦 `EndAbility` 被调用，名下所有挂起的 `AbilityTask` 瞬间自动清理！',
-              '标准近战攻击由两个并发任务组成：\n1. **`PlayMontageAndWait`**：跨端同步播放挥剑蒙太奇（支持动态攻速倍率），其 `OnCompleted` / `OnCancelled` / `OnInterrupted` 均连向 `EndAbility`。\n2. **`WaitGameplayEvent`**：监听 `Event.Montage.HitFrame` 标签。美术在蒙太奇挥刀最猛那一帧放一个 `AnimNotify` 发送该标签事件，精准触发伤害结算！'
+              '标准近战攻击由两个并发任务组成：\n1. **`PlayMontageAndWait` / `PlayAnimAndWait`（UE 5.8 内置）**：前者跨端同步播放蒙太奇；后者（`UAbilityTask_PlayAnimAndWait`）可直接传入原始 **`UAnimSequence*`** 以动态蒙太奇播放（支持 `SlotName`、`BlendIn/OutTime` 及 `OnBlendIn` 回调），省去为大量简单动作逐一创建蒙太奇资产的繁琐！\n2. **`WaitGameplayEvent`**：监听 `Event.Montage.HitFrame` 标签。美术在蒙太奇挥刀最猛那一帧放一个 `AnimNotify` 发送该标签事件，精准触发伤害结算！'
             ],
+            callout: {
+              kind: 'ue5',
+              label: '技能外部监听怎么写？用 AbilityAsync_*！',
+              text: 'AbilityTask 只能在 UGameplayAbility 内部使用；若需要在 UMG UI、PlayerController 或普通 Actor 蓝图中监听属性或标签变化，请使用引擎内置的 AbilityAsync 系列节点（UAbilityAsync_WaitAttributeChanged、WaitGameplayTagCountChanged、WaitGameplayEvent、WaitGameplayEffectApplied 等）！'
+            },
             changes: [
               { op: 'add', text: 'PlayMontageAndWait 托管动画播放与打断自动收尾' },
               { op: 'add', text: 'WaitGameplayEvent 响应动画帧事件，天然随攻速伸缩对齐' }
@@ -714,16 +719,16 @@ export const MODULES_5_TO_6: ModuleData[] = [
           },
           {
             id: 's3',
-            shortLabel: '子对象新列表',
+            shortLabel: '子对象列表与 Iris',
             phase: 'UE5_NEW',
-            title: 'UE 5.1+ 注册子对象复制列表：告别每帧轮询 ReplicateSubobjects',
+            title: 'UE 5.8 子对象复制列表与 GAS × Iris 序列化管线',
             paragraphs: [
-              '对于动态挂载到 ASC 的新 `UAttributeSet`（例如捡起能量武器动态挂载 `UWeaponAmmoAttributeSet`），UE 5.1+ 提供了 Actor 级开关 `bReplicateUsingRegisteredSubObjectList = true` 的**注册式子对象复制列表**（Iris 复制系统也依赖它）。',
-              'ASC 已原生适配：调用 `ASC->AddAttributeSetSubobject(NewSet)`（新建时 `NewObject` 的 Outer 应为 ASC 的 OwnerActor，Lyra 使用 `ASC->GetOwner()`）后，当宿主启用注册列表时会自动 `AddReplicatedSubObject`；卸载时用 `RemoveSpawnedAttribute` 同步移出列表。它省掉的是每帧虚函数 `ReplicateSubobjects()` 的手写枚举开销；至于“只在属性变脏时才比对”，那是 **Push Model** 的职责，二者不要混为一谈。'
+              '对于动态挂载到 ASC 的新 `UAttributeSet`（例如捡起能量武器动态挂载 `UWeaponAmmoAttributeSet`），UE5 提供了 Actor 级开关 `bReplicateUsingRegisteredSubObjectList = true` 的**注册式子对象复制列表**（**Iris** 下一代复制系统强制依赖它）。ASC 调用 `AddAttributeSetSubobject(NewSet)`（Outer 为 `ASC->GetOwner()`）会自动 `AddReplicatedSubObject`，卸载时用 `RemoveSpawnedAttribute` 移出，彻底告别每帧虚函数 `ReplicateSubobjects()` 轮询。',
+              '在 **UE 5.8** 中，`GameplayAbilities` 已内置完整的 **Iris `Serialization/` NetSerializer 套件**：包括 `FGameplayTagCountContainerNetSerializer`（由 `CVarReplicateTagCountContainerWithIris` 控制新版标签容器复制）、`FGameplayEffectContextHandleNetSerializer`、`FGameplayAbilityTargetDataHandleNetSerializer` 与 `FMinimalGameplayCueReplicationProxyNetSerializer`。若项目开启 Iris 并自定义派生了 `FGameplayEffectContext` 或 `FGameplayAbilityTargetData`，引擎会通过多态结构体序列化缓存（`TPolymorphicStructNetSerializerImpl`）自动识别或按需注册自定义 NetSerializer！'
             ],
             hud: [
               { key: 'flag', label: 'UE5 子对象复制模式', value: 'RegisteredSubObjectList', status: 'good' },
-              { key: 'api', label: '动态挂载 AttributeSet', value: 'AddAttributeSetSubobject()', status: 'good' }
+              { key: 'iris', label: 'UE 5.8 Iris 适配', value: 'TagCount / Context / TargetData 全套 Serializer', status: 'good' }
             ],
             scene: {
               nodes: [

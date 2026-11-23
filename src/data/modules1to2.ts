@@ -342,19 +342,19 @@ export const MODULES_1_TO_2: ModuleData[] = [
             },
             callout: {
               kind: 'ue5',
-              label: 'UE5 版本演进提示 (5.0+)',
-              text: '许多老教程（UE 4.24–5.2 时代）要求重写 AssetManager 并手动调用 InitGlobalData()；自 UE 5.3 起引擎会自动完成该初始化（保留旧调用也无害，函数会提前返回）。只有当你需要自定义全局 FGameplayEffectContext 或扩展 AbilitySystemGlobals 子类时才需配置 DefaultGame.ini。'
+              label: 'UE 5.8 配置入口演进 (DeveloperSettings)',
+              text: '老教程要求手动调 InitGlobalData() 并手改 DefaultGame.ini；自 UE 5.3 起引擎会自动初始化，且自 UE 5.5 起 UAbilitySystemGlobals 的旧配置属性均已标记废弃——在 UE 5.8 中请直接通过编辑器 Project Settings → Game → Gameplay Abilities Settings（UGameplayAbilitiesDeveloperSettings，C++ 用 GetDefault<UGameplayAbilitiesDeveloperSettings>() 读取）配置全局子类、Cue 路径与标签复制开关！'
             },
             hud: [
               { key: 'plugin', label: '必需插件', value: 'GameplayAbilities', status: 'good' },
               { key: 'modules', label: 'Build.cs 模块', value: 'Abilities + Tags + Tasks', status: 'good' },
-              { key: 'init', label: 'InitGlobalData()', value: 'UE5 自动执行', status: 'good' }
+              { key: 'init', label: '全局配置 (5.8)', value: 'GameplayAbilitiesDeveloperSettings', status: 'good' }
             ],
             scene: {
               nodes: [
                 { id: 'uproj', col: -1.8, row: 0, color: 'sand', icon: 'code', label: '.uproject', sublabel: 'Plugin: GameplayAbilities' },
                 { id: 'build', col: 0, row: 0, color: 'green', icon: 'code', label: 'Build.cs', sublabel: '3 Core Modules', state: 'active' },
-                { id: 'ready', col: 1.9, row: 0, color: 'blue', icon: 'asc', label: 'GAS Ready', sublabel: 'UE 5.3 – 5.5' }
+                { id: 'ready', col: 1.9, row: 0, color: 'blue', icon: 'asc', label: 'GAS Ready', sublabel: 'UE 5.8' }
               ],
               edges: [
                 { id: 'r1', from: 'uproj', to: 'build', packet: 'rep' },
@@ -784,7 +784,7 @@ void AHeroCharacter::OnRep_PlayerState() {
             ],
             changes: [
               { op: 'mod', text: 'Owning Client：接收完整 FActiveGameplayEffects (支持本地预测与 CD/Buff UI)' },
-              { op: 'mod', text: 'Simulated Proxies：仅接收精简 MinimalReplicationTags 与 GameplayCues' }
+              { op: 'mod', text: 'Simulated Proxies：仅接收精简复制标签（UE 5.7+ 统一走 GameplayTagCountContainer）与 GameplayCues' }
             ],
             hud: [
               { key: 'mode', label: '玩家角色推荐', value: 'Mixed', status: 'good' },
@@ -1072,16 +1072,17 @@ void AHeroCharacter::OnRep_PlayerState() {
             title: '避坑指南：Loose Gameplay Tags 绝不会自动网络复制！',
             paragraphs: [
               '看到 `ASC->AddLooseGameplayTag()` 很顺手，很多人在服务端直接调它给角色加状态，结果发现客户端动画蓝图怎么也读不到这个标签！',
-              '记住核心铁律：**普通 `LooseGameplayTag` 纯属调用端本地计数，绝不通过网络同步**！虽然 UE5 提供了 `AddReplicatedLooseGameplayTag()` 可以同步给客户端，但它**不支持客户端预测回滚**，且漏调一次 `Remove` 就会造成永久计数泄漏。正式战斗状态请优先使用 `UGameplayEffect` 授予标签！'
+              '记住核心铁律：**默认 `AddLooseGameplayTag(Tag)` 的复制状态为 `EGameplayTagReplicationState::None`（纯本地计数，绝不网络同步）**！注意 **UE 5.7–5.8 重大变化**：早期 UE 5.3–5.6 的 `AddReplicatedLooseGameplayTag()` 已被移除，统一合并到 `AddLooseGameplayTag(Tag, Count, EGameplayTagReplicationState)`——支持五档粒度：`None`、`SimulatedTagOnly`、`TagOnly`、`CountToOwner`、`TagAndCountToAll`（启用 Iris 时 `CountToOwner` 等价于 `TagAndCountToAll`）。但即便开启复制，松散标签依然**缺乏 GE 级的持续时间/抑制管理**，且漏调一次 `Remove` 就会永久泄漏。正式战斗状态请优先使用 `UGameplayEffect` 授予标签！'
             ],
             callout: {
               kind: 'warn',
-              label: '什么时候才能用 Loose Tag？',
-              text: '仅适用于纯单端临时标记（例如客户端本地 UI 折叠锁、纯服务端 AI 行为树临时冷却锁），或者由框架底层（如 ActivationOwnedTags）严格托管生命周期的场景。'
+              label: 'UE 5.8 API 迁移与使用边界',
+              text: '老代码若调用了 AddReplicatedLooseGameplayTag()，在 UE 5.8 中需迁移为 AddLooseGameplayTag(Tag, 1, EGameplayTagReplicationState::CountToOwner)（或 TagOnly），且 Remove 时须传匹配的复制状态。蓝图库仍可通过 UAbilitySystemBlueprintLibrary::AddLooseGameplayTags(..., bShouldReplicate) 操作。'
             },
             hud: [
-              { key: 'loose', label: 'AddLooseGameplayTag', value: '仅本地 · 不复制!', status: 'bad' },
-              { key: 'ge_tag', label: 'GE Granted Tags', value: '自动复制 + 预测回滚', status: 'good' }
+              { key: 'loose', label: '默认 TagRepState', value: 'None (仅本地 · 不复制)', status: 'bad' },
+              { key: 'rep_state', label: 'UE 5.8 五档粒度', value: 'TagOnly / CountToOwner / All', status: 'good' },
+              { key: 'ge_tag', label: '正式战斗状态推荐', value: 'GE Granted Tags ✅', status: 'good' }
             ],
             scene: {
               nodes: [
@@ -1204,8 +1205,8 @@ void AHeroCharacter::OnRep_PlayerState() {
             phase: 'PITFALL',
             title: '校准旧误区：ActivationOwnedTags 的复制开关与旁观动画排错',
             paragraphs: [
-              '早期 UE4 教程常断言“`GA` 的 `ActivationOwnedTags` 绝不会同步给 `SimulatedProxy`”。**在 UE 5.3–5.5 中必须校准这一说法**：引擎提供全局开关 **`ReplicateActivationOwnedTags`**（`UAbilitySystemGlobals::ShouldReplicateActivationOwnedTags()`，现代引擎默认开启；可在项目 ini 中显式配置，具体以所用版本的 `AbilitySystemGlobals` / `GameplayAbilitiesDeveloperSettings` 源码为准）。开启时，技能激活后服务端除了本地 `AddLooseGameplayTags`，还会把这些标签写入复制容器：`LocalPredicted` / `ServerInitiated` 技能走 **`MinimalReplicationTags`**，其余走 **`ReplicatedLooseTags`**——旁观客户端因此能看到这些标签（存在一次网络往返延迟，旁观端不做预测）。',
-              '那为什么实战中仍常遇到“本机举盾正常，旁观玩家看不到举盾动画”？请按三步排查：\n1. 检查项目配置是否沿用老工程关掉了 `ReplicateActivationOwnedTags=False`（或在代码里手调了非复制的 `AddLooseGameplayTag`）；\n2. 检查网络角色与 **AnimBP 读取的 ASC 指针**（当 ASC 在 `PlayerState` 上时，`SimulatedProxy` 的 `AnimBP` 若在 `OnRep_PlayerState` 到达前初始化并缓存了空指针，就永远读不到标签！）；\n3. 若该状态还需附带常驻 `GameplayCue`、叠层或抑制规则，通过持续型 `GameplayEffect`（配 `UTargetTagsGameplayEffectComponent`）授予标签依然是非常稳健的工程方案。'
+              '早期 UE4 教程常断言“`GA` 的 `ActivationOwnedTags` 绝不会同步给 `SimulatedProxy`”。**在 UE 5.8 中必须校准这一说法**：引擎在 **Project Settings → Gameplay Abilities Settings**（`UGameplayAbilitiesDeveloperSettings::ReplicateActivationOwnedTags`）默认开启了该开关。**UE 5.7–5.8 底层已重构**：旧的 `MinimalReplicationTags` 与 `ReplicatedLooseTags` 容器已标记 `UE_DEPRECATED(5.7)`，现在 `UGameplayAbility` 在激活/结束时统一调用 `AddLooseGameplayTags(ActivationOwnedTags, 1, EGameplayTagReplicationState::CountToOwner)`，通过统一的 `GameplayTagCountContainer` 将标签同步给本机与旁观客户端（旁观端仍存在一次网络往返延迟且不做预测）。',
+              '那为什么实战中仍常遇到“本机举盾正常，旁观玩家看不到举盾动画”？请按三步排查：\n1. 检查 **Project Settings → Gameplay Abilities Settings** 中是否沿用老工程关掉了 `ReplicateActivationOwnedTags`（或在代码里手调了默认 `TagRepState = None` 的 `AddLooseGameplayTag`）；\n2. 检查网络角色与 **AnimBP 读取的 ASC 指针**（当 ASC 在 `PlayerState` 上时，`SimulatedProxy` 的 `AnimBP` 若在 `OnRep_PlayerState` 到达前初始化并缓存了空指针，就永远读不到标签！）；\n3. 若该状态还需附带常驻 `GameplayCue`、叠层或抑制规则，通过持续型 `GameplayEffect`（配 `UTargetTagsGameplayEffectComponent`）授予标签依然是非常稳健的工程方案。'
             ],
             callout: {
               kind: 'ue5',
@@ -1213,18 +1214,18 @@ void AHeroCharacter::OnRep_PlayerState() {
               text: '纯技能期间的状态（举盾、蓄力）可直接依赖 ReplicateActivationOwnedTags 同步；需要绑定持续特效 Cue、叠层、抑制规则或跨技能留存的战斗状态，优先采用持续型 GameplayEffect 授予。'
             },
             hud: [
-              { key: 'cfg_on', label: 'ReplicateActivationOwnedTags', value: '开启时同步给旁观端', status: 'good' },
-              { key: 'debug_chk', label: '旁观失灵三必查', value: '配置开关 / LooseTag / AnimBP空ASC', status: 'warn' }
+              { key: 'cfg_on', label: 'ReplicateActivationOwnedTags', value: '5.8 默认走 CountToOwner 同步', status: 'good' },
+              { key: 'debug_chk', label: '旁观失灵三必查', value: 'ProjectSettings / RepState / AnimBP空ASC', status: 'warn' }
             ],
             scene: {
               nodes: [
                 { id: 'ga', col: -1.8, row: -0.4, color: 'blue', icon: 'ga', label: 'GA_Block', sublabel: 'ActivationOwned: State.Block' },
-                { id: 'cfg', col: 0.2, row: -1.1, color: 'violet', icon: 'asc', label: 'AbilitySystemGlobals', sublabel: 'ReplicateActivationOwnedTags', state: 'active', size: 'sm' },
-                { id: 'sim', col: 1.7, row: 0.8, color: 'green', icon: 'users', label: 'SimulatedProxy 旁观端', sublabel: '需确保 AnimBP 晚绑定有效 ASC', badge: { text: '开启复制或用持续 GE ✅', tone: 'good' } }
+                { id: 'cfg', col: 0.2, row: -1.1, color: 'violet', icon: 'asc', label: 'DeveloperSettings', sublabel: 'ReplicateActivationOwnedTags', state: 'active', size: 'sm' },
+                { id: 'sim', col: 1.7, row: 0.8, color: 'green', icon: 'users', label: 'SimulatedProxy 旁观端', sublabel: '需确保 AnimBP 晚绑定有效 ASC', badge: { text: 'CountToOwner 或持续 GE ✅', tone: 'good' } }
               ],
               edges: [
-                { id: 'ao1', from: 'ga', to: 'cfg', packet: 'predict', label: '检查全局复制配置' },
-                { id: 'ao2', from: 'cfg', to: 'sim', packet: 'rep', label: 'MinimalReplicationTags / 持续 GE 同步', labelTone: 'green' }
+                { id: 'ao1', from: 'ga', to: 'cfg', packet: 'predict', label: '检查 Project Settings 开关' },
+                { id: 'ao2', from: 'cfg', to: 'sim', packet: 'rep', label: 'TagCountContainer (CountToOwner) 同步', labelTone: 'green' }
               ]
             }
           },

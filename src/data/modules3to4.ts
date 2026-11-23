@@ -509,9 +509,9 @@ if (Data.EvaluatedData.Attribute == GetIncomingDamageAttribute()) {
   },
   {
     id: 'mod-effects',
-    indexLabel: '04. 游戏效果 (UE 5.3+)',
-    title: '04. 游戏效果 (UE 5.3+)',
-    titleEn: '04. Gameplay Effects (UE 5.3–5.5)',
+    indexLabel: '04. 游戏效果 (UE 5.8)',
+    title: '04. 游戏效果 (UE 5.8)',
+    titleEn: '04. Gameplay Effects (UE 5.8)',
     folderColor: 'orange',
     lessons: [
       {
@@ -660,39 +660,39 @@ if (Data.EvaluatedData.Attribute == GetIncomingDamageAttribute()) {
       },
       {
         slug: 'ge-components-math',
-        title: 'UE 5.3–5.5 模块化 GE 组件与聚合器公式',
-        titleEn: 'UGameplayEffectComponent (5.3+) & UE 5.5 Modifier Math',
-        summary: '掌握 UE 5.3+ 模块化 GEComponent 重大重构，吃透 UE 5.5 新增的 MultiplyCompound 乘区公式。',
+        title: 'UE 5.8 模块化 GE 组件与聚合器公式',
+        titleEn: 'UGameplayEffectComponent & UE 5.8 Modifier Math',
+        summary: '掌握 UE 5.8 完整模块化 GEComponent 体系（含 CancelAbilityTags 与 UIData），吃透 FAggregator 五段乘区公式。',
         durationMin: 14,
         difficulty: '高阶',
         goals: [
-          { id: 'g1', text: '适应 UE 5.3+ 将臃肿 GE 拆分为模块化 UGameplayEffectComponent 的新面板', unlockAtStep: 2 },
+          { id: 'g1', text: '掌握 UE 5.8 完整 UGameplayEffectComponent 模块化面板（含 CancelAbilityTags / UIData）', unlockAtStep: 2 },
           { id: 'g2', text: '永不混淆 AssetTagsComponent（自身标签）与 TargetTagsComponent（授予目标标签）', unlockAtStep: 2 },
           { id: 'g3', text: '理解 OngoingTagRequirements 动态暂停/恢复 Buff 的精妙用法', unlockAtStep: 3 },
-          { id: 'g4', text: '精通 UE 5.5 FAggregator 完整算式及 MultiplyAdditive vs MultiplyCompound 差异', unlockAtStep: 4 }
+          { id: 'g4', text: '精通 UE 5.8 FAggregator 五段算式及 MultiplyAdditive vs MultiplyCompound 差异', unlockAtStep: 4 }
         ],
         steps: [
           {
             id: 's1',
-            shortLabel: '5.3 重大重构',
+            shortLabel: '模块化组件体系',
             phase: 'UE5_NEW',
-            title: '为什么升级 UE 5.3+ 后，GE 蓝图里的标签栏“消失”了？',
+            title: '为什么在 UE 5.8 中，GE 蓝图里的旧标签栏“消失”了？',
             paragraphs: [
-              '如果你对照早期 UE4/5.1 教程打开 UE 5.3、5.4 或 5.5 的 `GameplayEffect` 编辑器，会惊讶地发现原有的 `GrantedTags`、`ApplicationTagRequirements`、`GrantedAbilities` 折叠栏全不见了！',
-              '这是因为 Epic 自 **UE 5.3** 起对 `UGameplayEffect` 实施了彻底的**组合模式重构**：废弃了主类上几十个僵硬成员变量，改为按需点击 **Components `+` 号** 添加独立的 `[[UGameplayEffectComponent|UE 5.3 引入的模块化子对象基类，按需挂载标签授予、条件校验、赋予技能、免疫等行为]]` 子对象（且在 UE 5.4 中移除了 `OnGameplayEffectChanged` 的 `const` 签名）！'
+              '如果你对照早期 UE4/5.1 教程打开 UE 5.8 的 `GameplayEffect` 编辑器，会发现原有的 `GrantedTags`、`ApplicationTagRequirements`、`GrantedAbilities` 折叠栏全不见了！',
+              '这是因为 Epic 自 UE 5.3 起对 `UGameplayEffect` 实施了彻底的**组合模式重构**并在 UE 5.4–5.8 持续完善：改为按需点击 **Components `+` 号** 挂载 `[[UGameplayEffectComponent|UE5 模块化 GE 子组件基类，按需挂载标签授予、打断/封锁技能、条件校验、赋予技能、免疫与 UI 数据等行为]]`。在 UE 5.8 中，除了常用的 `UTargetTags`、`UBlockAbilityTags`、`UImmunity` 外，还内置了 **`UCancelAbilityTagsGameplayEffectComponent`**（*Cancel Abilities with Tags*，支持 `OnApplication` / `OnExecution` 按 With/Without Tags 直接打断运行中技能），且 **`UGameplayEffectUIData`** 也已成为 GEComponent 子类（通过 `FindComponent<UGameplayEffectUIData>()` 获取）。'
             ],
             callout: {
               kind: 'ue5',
-              label: 'UE 5.3 → 5.5 核心架构演进',
-              text: '需要什么功能就挂载对应的 GEComponent，让简单的“扣 10 滴血”GE 不再背负十几个空容器的内存与序列化负担！'
+              label: 'UE 5.8 C++ API 校验与访问规范',
+              text: 'UE 5.6 起旧的 ValidateGameplayEffect / ScalableFloat 校验与 GetModifierMagnitude(..., bFactorInStackCount) 已废弃，统一走 IsDataValid() 与 GetModifierMagnitude(Idx)；UE 5.7 起 StackingType 成员变量已标废弃，C++ 侧请改用 GetStackingType() / SetStackingType()！'
             },
             hud: [
-              { key: 'ver', label: '重构起始版本', value: 'UE 5.3 (5.4/5.5 深化)', status: 'good' },
+              { key: 'ver', label: '当前对标版本', value: 'UE 5.8 (11+ 内置组件)', status: 'good' },
               { key: 'pattern', label: '架构模式', value: 'UGameplayEffectComponent', status: 'good' }
             ],
             scene: {
               nodes: [
-                { id: 'ge', col: 0, row: 0, color: 'amber', icon: 'ge', label: 'UGameplayEffect', sublabel: '轻量模块化宿主 (5.3+)', state: 'active', size: 'lg' },
+                { id: 'ge', col: 0, row: 0, color: 'amber', icon: 'ge', label: 'UGameplayEffect', sublabel: '轻量模块化宿主 (UE 5.8)', state: 'active', size: 'lg' },
                 { id: 'c1', col: -2, row: -1, color: 'green', icon: 'tag', label: 'TargetTagsComp', sublabel: '授予目标标签', size: 'sm' },
                 { id: 'c2', col: 2, row: -1, color: 'violet', icon: 'tag', label: 'AssetTagsComp', sublabel: 'GE 自身属性标签', size: 'sm' },
                 { id: 'c3', col: -1.9, row: 1.3, color: 'blue', icon: 'ga', label: 'AbilitiesComp', sublabel: '存续期授予技能', size: 'sm' },
@@ -772,22 +772,22 @@ if (Data.EvaluatedData.Attribute == GetIncomingDamageAttribute()) {
           },
           {
             id: 's4',
-            shortLabel: 'UE 5.5 乘区公式',
+            shortLabel: 'UE 5.8 乘区公式',
             phase: 'SOLUTION',
             title: '吃透 FAggregator 算式：同一求值通道内的加乘与 Override',
             paragraphs: [
-              '在**同一求值通道 (`EGameplayModEvaluationChannel`)** 内，UE 5.0–5.4 的 `EGameplayModOp::Multiplicitive` 采用 **`1.0` 偏置同池相加法**：`1.0 + (1.2 - 1.0) + (1.2 - 1.0) = 1.4`（即两个 +20% 词条同通道相加为 `100 × 1.4 = 140`，而非 `144`）。在 5.5 以前若想做阶段顺序连乘，往往需要拆分配置多个 `Modifier Evaluation Channel`（如 `Channel0` 算完传入 `Channel1`）或改用 `ExecCalc`。',
-              '而在 **UE 5.5** 中，Epic 在**单个通道内**直接补全了新乘区枚举：\n`ChannelOut = ((InBase + AddBase) × MultiplyAdditive ÷ DivideAdditive × MultiplyCompound) + AddFinal`\n• **`MultiplyAdditive`**（原 `Multiplicitive`）：同池偏置加算百分比；\n• **`MultiplyCompound`（5.5 新增）**：单通道内直接独立连乘（`100 × 1.2 × 1.2 = 144`）！\n• **`AddFinal`（5.5 新增）**：乘算后平坦追加；\n• **`Override`**：覆盖**当前求值通道**的结果（同一通道内存在多个 Override 时，胜出者取决于聚合器内部顺序，工程上应避免并存；若启用了更高编号的后续 Evaluation Channel，后续通道仍会以该覆盖值为基底继续求值！）。'
+              '在**同一求值通道 (`EGameplayModEvaluationChannel`)** 内，早期 UE 5.0–5.4 的 `EGameplayModOp::Multiplicitive` 采用 **`1.0` 偏置同池相加法**：`1.0 + (1.2 - 1.0) + (1.2 - 1.0) = 1.4`（即两个 +20% 词条同通道相加为 `100 × 1.4 = 140`，而非 `144`）。过去若想做阶段顺序连乘，往往需要拆分配置多个 `Modifier Evaluation Channel`（如 `Channel0` 算完传入 `Channel1`）或改用 `ExecCalc`。',
+              '而在 **UE 5.8**（自 5.5 引入）中，**单个通道内**直接提供完整的五段乘区枚举：\n`ChannelOut = ((InBase + AddBase) × MultiplyAdditive ÷ DivideAdditive × MultiplyCompound) + AddFinal`\n• **`MultiplyAdditive`**（原 `Multiplicitive`）：同池偏置加算百分比；\n• **`MultiplyCompound`**：单通道内直接独立连乘（`100 × 1.2 × 1.2 = 144`）！\n• **`AddFinal`**：乘算后平坦追加；\n• **`Override`**：覆盖**当前求值通道**的结果（同一通道内存在多个 Override 时，胜出者取决于聚合器内部顺序，工程上应避免并存；若启用了更高编号的后续 Evaluation Channel，后续通道仍会以该覆盖值为基底继续求值！）。'
             ],
             callout: {
               kind: 'ue5',
-              label: 'UE 5.5 数值策划福音',
-              text: '现在无需魔改源码，直接在 GE Modifier Op 下拉框中即可自由组合“基础固值(AddBase) → 同池增伤%(MultiplyAdditive) → 独立乘区(MultiplyCompound) → 最终固值(AddFinal)”四阶标准 RPG 公式！'
+              label: 'UE 5.8 数值策划标准管线',
+              text: '无需魔改源码，直接在 GE Modifier Op 下拉框中即可自由组合“基础固值(AddBase) → 同池增伤%(MultiplyAdditive) → 独立乘区(MultiplyCompound) → 最终固值(AddFinal)”四阶标准 RPG 公式！'
             },
             hud: [
               { key: 'mul_add', label: 'MultiplyAdditive (×2个+20%)', value: '× 1.40 (同池相加)', status: 'good' },
-              { key: 'mul_cmp', label: 'MultiplyCompound (5.5新)', value: '× 1.44 (独立连乘)', status: 'good' },
-              { key: 'add_fin', label: 'AddFinal (5.5新)', value: '乘算后平坦追加', status: 'good' }
+              { key: 'mul_cmp', label: 'MultiplyCompound', value: '× 1.44 (独立连乘)', status: 'good' },
+              { key: 'add_fin', label: 'AddFinal', value: '乘算后平坦追加', status: 'good' }
             ],
             scene: {
               nodes: [
@@ -802,7 +802,7 @@ if (Data.EvaluatedData.Attribute == GetIncomingDamageAttribute()) {
                 { id: 'm3', from: 'mc', to: 'af', packet: 'rep' }
               ],
               inspectCard: {
-                title: 'UE 5.5 AGGREGATOR ORDER',
+                title: 'UE 5.8 AGGREGATOR ORDER',
                 rows: [
                   { left: '1. Base + AddBase', right: '基础加池' },
                   { left: '2. × MultiplyAdditive', right: '1 + Σ(M-1)' },

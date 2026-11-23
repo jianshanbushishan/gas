@@ -6,14 +6,14 @@ export const CheatsheetsView: React.FC = () => {
       <div className="alt-container">
         <div className="alt-hero">
           <div className="breadcrumb">ARCHITECT CHEATSHEETS · 随查随用速查手册</div>
-          <h1>UE 5.3 – 5.5 GAS 核心规范与调试速查表</h1>
+          <h1>UE 5.8 GAS 核心规范与调试速查表</h1>
           <p>浓缩源码级规则：组件迁移映射、网络复制选型、数值计算对比与控制台调试命令。</p>
         </div>
 
         <div className="card-grid">
-          {/* Card 1: UE 5.3+ GE Components */}
+          {/* Card 1: UE 5.8 GE Components */}
           <div className="panel-card">
-            <h3>1. UE 5.3–5.5 UGameplayEffectComponent 对照表</h3>
+            <h3>1. UE 5.8 UGameplayEffectComponent 对照表</h3>
             <table className="cheat-table">
               <thead>
                 <tr>
@@ -70,6 +70,28 @@ export const CheatsheetsView: React.FC = () => {
                   <td>Debuff 存续期间封锁带指定标签的技能</td>
                   <td>
                     <code>UBlockAbilityTagsGameplayEffectComponent</code>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <strong>施加/周期跳瞬间打断</strong>正在运行的技能
+                  </td>
+                  <td>
+                    <code>UCancelAbilityTagsGameplayEffectComponent</code>
+                    <br />
+                    <span style={{ color: 'var(--muted)' }}>
+                      面板名: Cancel Abilities with Tags（支持 OnApplication / OnExecution 与 With/Without Tags）
+                    </span>
+                  </td>
+                </tr>
+                <tr>
+                  <td>附带 Buff 图标/描述等 UI 元数据</td>
+                  <td>
+                    <code>UGameplayEffectUIData</code>（如 <code>_TextOnly</code>）
+                    <br />
+                    <span style={{ color: 'var(--muted)' }}>
+                      已转为 GEComponent 子类，C++ 用 <code>FindComponent&lt;UGameplayEffectUIData&gt;()</code>
+                    </span>
                   </td>
                 </tr>
                 <tr>
@@ -245,6 +267,15 @@ export const CheatsheetsView: React.FC = () => {
                     <code>Net PktLag=120</code> / <code>Log LogAbilitySystem Verbose</code>
                   </td>
                   <td>模拟 120ms 真实延迟并输出详尽预测密钥核销与拒绝回滚日志</td>
+                </tr>
+                <tr>
+                  <td>
+                    <code>AbilitySystem.IgnoreCooldowns</code> / <code>IgnoreCosts</code>
+                  </td>
+                  <td>
+                    UE 5.8 编辑器 <strong>Gameplay Abilities Editor Settings</strong> 内置调试开关（另含{' '}
+                    <code>GlobalAbilityScale</code>、<code>DebugDrawMaxDistance</code>）
+                  </td>
                 </tr>
               </tbody>
             </table>

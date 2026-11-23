@@ -146,16 +146,16 @@ export const TagRefcountWaveformDiagram: React.FC<DiagramProps> = ({ stepId, pha
         <g transform="translate(408, 32)">
           <rect x="0" y="0" width="378" height="84" rx="7" fill={pal.blueBg} stroke={pal.ink} strokeWidth="1.2" />
           <text x="12" y="19" fontSize="9.8" fontWeight="800" fill={pal.blueInk}>
-            🌐 网络差异：普通 LooseTag vs ReplicatedLooseTag
+            🌐 UE 5.8 网络差异：EGameplayTagReplicationState
           </text>
-          <text x="12" y="38" fontSize="9.2" fontWeight="600" fill={pal.ink}>
-            • AddLooseGameplayTag：仅在当前机器本地生效，绝不跨网复制！
+          <text x="12" y="38" fontSize="9.0" fontWeight="600" fill={pal.ink}>
+            • AddLooseGameplayTag(Tag)：默认 None，仅本地生效绝不复制！
           </text>
-          <text x="12" y="55" fontSize="9.2" fontWeight="800" fill={pal.blue}>
-            • AddReplicatedLooseGameplayTag：在 Server 调用后会通过
+          <text x="12" y="55" fontSize="9.0" fontWeight="800" fill={pal.blue}>
+            • 传 TagOnly / CountToOwner / TagAndCountToAll 统一走
           </text>
           <text x="12" y="73" fontSize="8.3" fontWeight="700" fill={pal.ink2}>
-            ReplicatedLooseTags 容器极简同步全端 (仍需成对 Remove)。
+            GameplayTagCountContainer 复制 (旧 AddReplicatedLoose 已移除)。
           </text>
         </g>
       </g>

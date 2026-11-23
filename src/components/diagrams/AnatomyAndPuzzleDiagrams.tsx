@@ -259,7 +259,7 @@ export const GasFivePillarsBlueprintDiagram: React.FC<DiagramProps> = ({ phase, 
     <g>
       <DiagramHeader
         pal={pal}
-        category="MASTER BLUEPRINT · UE 5.3–5.5 GAS 五大支柱与端到端战斗全链路总览图"
+        category="MASTER BLUEPRINT · UE 5.8 GAS 五大支柱与端到端战斗全链路总览图"
         title="UAbilitySystemComponent 核心大脑协同五大子系统 + 一发火球术从按键到飘字的 7 步旅程"
         rightBadge="全教程核心蓝图"
       />
@@ -573,7 +573,7 @@ export const Ge53ComponentPuzzleDiagram: React.FC<DiagramProps> = ({ stepId, pha
           strokeWidth={stepId === 's1' ? '2.2' : '1.3'}
         />
         <text x="16" y="21" fontSize="11" fontWeight="800" fill={pal.ink}>
-          🧩 UE 5.3–5.5 UGameplayEffect::GEComponents 模块化插槽映射（点击 Details 面板 + 号按需添加）：
+          🧩 UE 5.8 UGameplayEffect::GEComponents 模块化插槽映射（点击 Details 面板 + 号按需添加）：
         </text>
 
         {[

@@ -87,7 +87,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
           <input
             ref={inputRef}
             className="search-modal__input"
-            placeholder="搜索 GAS 概念、C++ 类名、易错坑点 (如 Mixed, Clamp, ExecCalc, UE 5.5)..."
+            placeholder="搜索 GAS 概念、C++ 类名、易错坑点 (如 Mixed, Clamp, ExecCalc, UE 5.8)..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {

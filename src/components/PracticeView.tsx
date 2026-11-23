@@ -39,7 +39,7 @@ export const PracticeView: React.FC<PracticeViewProps> = ({
             <div className="breadcrumb">DIAGNOSTIC WORKBENCH · 生产环境排错实战</div>
             <h1>UE5 GAS 线上疑难 Bug 实战诊断</h1>
             <p>
-              全部取材自真实多人项目的典型踩坑现场（UE 5.3–5.5 & Lyra 标准）。选出根因并查看引擎源码级解析。
+              全部取材自真实多人项目的典型踩坑现场（UE 5.8 & Lyra 标准）。选出根因并查看引擎源码级解析。
             </p>
           </div>
 
